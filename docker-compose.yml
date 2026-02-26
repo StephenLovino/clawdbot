@@ -10,9 +10,9 @@ services:
       CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY}
       CLAUDE_WEB_COOKIE: ${CLAUDE_WEB_COOKIE}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
-      OPENCLAW_GATEWAY_CONTROL_UI_DANGEROUSLY_ALLOW_HOST_HEADER_ORIGIN_FALLBACK: "true"
     volumes:
       - ${OPENCLAW_CONFIG_DIR}:/home/node/.openclaw
       - ${OPENCLAW_WORKSPACE_DIR}:/home/node/.openclaw/workspace
@@ -27,6 +27,8 @@ services:
         "dist/index.js",
         "gateway",
         "--allow-unconfigured",
+        "--gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback",
+        "true",
         "--bind",
         "${OPENCLAW_GATEWAY_BIND:-lan}",
         "--port",
