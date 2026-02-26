@@ -25,8 +25,8 @@ services:
       - "traefik.http.routers.openclaw.rule=Host(`${OPENCLAW_DOMAIN}`)"
       - "traefik.http.services.openclaw.loadbalancer.server.port=18789"
     command: >
-      bash -c 'mkdir -p /home/node/.openclaw &&
-      echo "{\"gateway\":{\"controlUi\":{\"dangerouslyAllowHostHeaderOriginFallback\":true}}}" > /home/node/.openclaw/openclaw.json &&
+      bash -c 'node dist/index.js config set gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback true &&
+      node dist/index.js config set agents.defaults.model deepseek/deepseek-chat &&
       node dist/index.js gateway --allow-unconfigured --bind $${OPENCLAW_GATEWAY_BIND:-lan} --port 18789'
 
   openclaw-cli:
