@@ -212,6 +212,7 @@ export const ZAI_DEFAULT_MODEL_REF = "zai/glm-5";
 export const XIAOMI_DEFAULT_MODEL_REF = "xiaomi/mimo-v2-flash";
 export const OPENROUTER_DEFAULT_MODEL_REF = "openrouter/auto";
 export const HUGGINGFACE_DEFAULT_MODEL_REF = "huggingface/deepseek-ai/DeepSeek-R1";
+export const DEEPSEEK_DEFAULT_MODEL_REF = "deepseek/deepseek-chat";
 export const TOGETHER_DEFAULT_MODEL_REF = "together/moonshotai/Kimi-K2.5";
 export const LITELLM_DEFAULT_MODEL_REF = "litellm/claude-opus-4-6";
 export const VERCEL_AI_GATEWAY_DEFAULT_MODEL_REF = "vercel-ai-gateway/anthropic/claude-opus-4.6";
@@ -249,6 +250,20 @@ export async function setOpenrouterApiKey(key: string, agentDir?: string) {
     credential: {
       type: "api_key",
       provider: "openrouter",
+      key: safeKey,
+    },
+    agentDir: resolveAuthAgentDir(agentDir),
+  });
+}
+
+export async function setDeepSeekApiKey(key: string, agentDir?: string) {
+  // Never persist the literal "undefined" (e.g. when prompt returns undefined and caller used String(key)).
+  const safeKey = key === "undefined" ? "" : key;
+  upsertAuthProfile({
+    profileId: "deepseek:default",
+    credential: {
+      type: "api_key",
+      provider: "deepseek",
       key: safeKey,
     },
     agentDir: resolveAuthAgentDir(agentDir),

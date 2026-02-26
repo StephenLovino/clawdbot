@@ -96,6 +96,12 @@ const AUTH_CHOICE_GROUP_DEFS: {
     choices: ["openrouter-api-key"],
   },
   {
+    value: "deepseek",
+    label: "DeepSeek",
+    hint: "API key",
+    choices: ["deepseek-api-key"],
+  },
+  {
     value: "kilocode",
     label: "Kilo Gateway",
     hint: "API key (OpenRouter-compatible)",
@@ -239,6 +245,7 @@ const BASE_AUTH_CHOICE_OPTIONS: ReadonlyArray<AuthChoiceOption> = [
     hint: "Uses GitHub device flow",
   },
   { value: "gemini-api-key", label: "Google Gemini API key" },
+  { value: "deepseek-api-key", label: "DeepSeek API key" },
   {
     value: "google-gemini-cli",
     label: "Google Gemini CLI OAuth",
