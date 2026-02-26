@@ -15,6 +15,7 @@ import { defaultRuntime, type RuntimeEnv } from "../../runtime.js";
 import { resolveWhatsAppAccount } from "../accounts.js";
 import { setActiveWebListener } from "../active-listener.js";
 import { monitorWebInbox } from "../inbound.js";
+import { hasActiveWebLogin } from "../login-qr.js";
 import {
   computeBackoff,
   newConnectionId,
@@ -147,6 +148,16 @@ export async function monitorWebChannel(
   let reconnectAttempts = 0;
 
   while (true) {
+    if (stopRequested()) {
+      break;
+    }
+
+    while (hasActiveWebLogin(account.accountId)) {
+      await sleep(2000, abortSignal);
+      if (stopRequested()) {
+        break;
+      }
+    }
     if (stopRequested()) {
       break;
     }

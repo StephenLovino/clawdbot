@@ -1,12 +1,10 @@
 import { normalizeApiKeyInput, validateApiKeyInput } from "./auth-choice.api-key.js";
 import {
-  createAuthChoiceDefaultModelApplier,
-  createAuthChoiceModelStateBridge,
   ensureApiKeyFromOptionEnvOrPrompt,
   normalizeTokenProviderInput,
 } from "./auth-choice.apply-helpers.js";
 import type { ApplyAuthChoiceParams, ApplyAuthChoiceResult } from "./auth-choice.apply.js";
-import { applyDeepSeekConfig, applyDeepSeekProviderConfig } from "./onboard-auth.config-core.js";
+import { applyAgentDefaultModelPrimary } from "./onboard-auth.config-shared.js";
 import { setDeepSeekApiKey } from "./onboard-auth.credentials.js";
 import { applyAuthProfileConfig } from "./onboard-auth.js";
 
@@ -20,16 +18,6 @@ export async function applyAuthChoiceDeepSeek(
   }
 
   let nextConfig = params.config;
-  let agentModelOverride: string | undefined;
-  const applyProviderDefaultModel = createAuthChoiceDefaultModelApplier(
-    params,
-    createAuthChoiceModelStateBridge({
-      getConfig: () => nextConfig,
-      setConfig: (config) => (nextConfig = config),
-      getAgentModelOverride: () => agentModelOverride,
-      setAgentModelOverride: (model) => (agentModelOverride = model),
-    }),
-  );
 
   const normalizedTokenProvider = normalizeTokenProviderInput(params.opts?.tokenProvider);
 
@@ -41,11 +29,14 @@ export async function applyAuthChoiceDeepSeek(
     envLabel: "DEEPSEEK_API_KEY",
     promptMessage: "Enter DeepSeek API key",
     setCredential: async (apiKey) => setDeepSeekApiKey(apiKey, params.agentDir),
-    defaultModel: DEEPSEEK_DEFAULT_MODEL_REF,
     normalize: normalizeApiKeyInput,
     validate: validateApiKeyInput,
     prompter: params.prompter,
   });
+
+  if (params.setDefaultModel) {
+    nextConfig = applyAgentDefaultModelPrimary(nextConfig, DEEPSEEK_DEFAULT_MODEL_REF);
+  }
 
   nextConfig = applyAuthProfileConfig(nextConfig, {
     profileId: "deepseek:default",
@@ -53,12 +44,5 @@ export async function applyAuthChoiceDeepSeek(
     mode: "api_key",
   });
 
-  await applyProviderDefaultModel({
-    defaultModel: DEEPSEEK_DEFAULT_MODEL_REF,
-    applyDefaultConfig: applyDeepSeekConfig,
-    applyProviderConfig: applyDeepSeekProviderConfig,
-    noteDefault: DEEPSEEK_DEFAULT_MODEL_REF,
-  });
-
-  return { config: nextConfig, agentModelOverride };
+  return { config: nextConfig };
 }

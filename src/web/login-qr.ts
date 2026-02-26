@@ -61,6 +61,11 @@ function isLoginFresh(login: ActiveLogin) {
   return Date.now() - login.startedAt < ACTIVE_LOGIN_TTL_MS;
 }
 
+export function hasActiveWebLogin(accountId: string): boolean {
+  const login = activeLogins.get(accountId);
+  return login ? isLoginFresh(login) : false;
+}
+
 function attachLoginWaiter(accountId: string, login: ActiveLogin) {
   login.waitPromise = waitForWaConnection(login.sock)
     .then(() => {

@@ -24,6 +24,7 @@ type AuthChoiceFlagOptions = Pick<
   | "togetherApiKey"
   | "huggingfaceApiKey"
   | "zaiApiKey"
+  | "deepseekApiKey"
   | "xiaomiApiKey"
   | "minimaxApiKey"
   | "opencodeZenApiKey"
