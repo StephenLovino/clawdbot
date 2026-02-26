@@ -162,6 +162,16 @@ const OPENROUTER_DEFAULT_COST = {
   cacheWrite: 0,
 };
 
+const DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1";
+const DEEPSEEK_DEFAULT_CONTEXT_WINDOW = 64000;
+const DEEPSEEK_DEFAULT_MAX_TOKENS = 8192;
+const DEEPSEEK_DEFAULT_COST = {
+  input: 0,
+  output: 0,
+  cacheRead: 0,
+  cacheWrite: 0,
+};
+
 const VLLM_BASE_URL = "http://127.0.0.1:8000/v1";
 const VLLM_DEFAULT_CONTEXT_WINDOW = 128000;
 const VLLM_DEFAULT_MAX_TOKENS = 8192;
@@ -677,6 +687,33 @@ function buildTogetherProvider(): ProviderConfig {
   };
 }
 
+function buildDeepSeekProvider(): ProviderConfig {
+  return {
+    baseUrl: DEEPSEEK_BASE_URL,
+    api: "openai-completions",
+    models: [
+      {
+        id: "deepseek-chat",
+        name: "DeepSeek Chat",
+        reasoning: false,
+        input: ["text"],
+        cost: DEEPSEEK_DEFAULT_COST,
+        contextWindow: DEEPSEEK_DEFAULT_CONTEXT_WINDOW,
+        maxTokens: DEEPSEEK_DEFAULT_MAX_TOKENS,
+      },
+      {
+        id: "deepseek-reasoner",
+        name: "DeepSeek Reasoner",
+        reasoning: true,
+        input: ["text"],
+        cost: DEEPSEEK_DEFAULT_COST,
+        contextWindow: DEEPSEEK_DEFAULT_CONTEXT_WINDOW,
+        maxTokens: DEEPSEEK_DEFAULT_MAX_TOKENS,
+      },
+    ],
+  };
+}
+
 function buildOpenrouterProvider(): ProviderConfig {
   return {
     baseUrl: OPENROUTER_BASE_URL,
@@ -985,6 +1022,13 @@ export async function resolveImplicitProviders(params: {
     resolveApiKeyFromProfiles({ provider: "kilocode", store: authStore });
   if (kilocodeKey) {
     providers.kilocode = { ...buildKilocodeProvider(), apiKey: kilocodeKey };
+  }
+
+  const deepseekProviderKey =
+    resolveEnvApiKeyVarName("deepseek") ??
+    resolveApiKeyFromProfiles({ provider: "deepseek", store: authStore });
+  if (deepseekProviderKey) {
+    providers.deepseek = { ...buildDeepSeekProvider(), apiKey: deepseekProviderKey };
   }
 
   return providers;
