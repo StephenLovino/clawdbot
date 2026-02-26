@@ -20,6 +20,10 @@ services:
       - "${OPENCLAW_BRIDGE_PORT:-18790}:18790"
     init: true
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.openclaw.rule=Host(`${OPENCLAW_DOMAIN}`)"
+      - "traefik.http.services.openclaw.loadbalancer.server.port=18789"
     command: >
       bash -c 'mkdir -p /home/node/.openclaw &&
       echo "{\"gateway\":{\"controlUi\":{\"dangerouslyAllowHostHeaderOriginFallback\":true}}}" > /home/node/.openclaw/openclaw.json &&
