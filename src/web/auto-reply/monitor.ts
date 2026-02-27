@@ -24,7 +24,7 @@ import {
   resolveReconnectPolicy,
   sleepWithAbort,
 } from "../reconnect.js";
-import { formatError, getWebAuthAgeMs, readWebSelfId } from "../session.js";
+import { formatError, getStatusCode, getWebAuthAgeMs, readWebSelfId } from "../session.js";
 import { DEFAULT_WEB_MEDIA_BYTES } from "./constants.js";
 import { whatsappHeartbeatLog, whatsappLog } from "./loggers.js";
 import { buildMentionConfig } from "./mentions.js";
