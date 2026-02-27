@@ -184,6 +184,13 @@ export async function waitForWaConnection(sock: ReturnType<typeof makeWASocket>)
 }
 
 export function getStatusCode(err: unknown) {
+  const boom =
+    extractBoomDetails(err) ??
+    extractBoomDetails((err as { error?: unknown })?.error) ??
+    extractBoomDetails((err as { lastDisconnect?: { error?: unknown } })?.lastDisconnect?.error);
+  if (typeof boom?.statusCode === "number") {
+    return boom.statusCode;
+  }
   return (
     (err as { output?: { statusCode?: number } })?.output?.statusCode ??
     (err as { status?: number })?.status
@@ -256,9 +263,6 @@ function extractBoomDetails(err: unknown): {
 }
 
 export function formatError(err: unknown): string {
-  if (err instanceof Error) {
-    return err.message;
-  }
   if (typeof err === "string") {
     return err;
   }
