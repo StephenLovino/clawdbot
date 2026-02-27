@@ -35,15 +35,18 @@ type ActiveLogin = {
   verbose: boolean;
 };
 
-const ACTIVE_LOGIN_TTL_MS = 3 * 60_000;
+const ACTIVE_LOGIN_TTL_MS = 5 * 60_000;
 const activeLogins = new Map<string, ActiveLogin>();
 
 function closeSocket(sock: WaSocket) {
   try {
+    // Gracefully instruct Baileys to close the connection and release auth state locks
+    (sock as unknown as { end: (err: unknown) => void }).end?.(undefined);
+  } catch {}
+  try {
+    // Fallback abrupt disconnect
     sock.ws?.close();
-  } catch {
-    // ignore
-  }
+  } catch {}
 }
 
 async function resetActiveLogin(accountId: string, reason?: string) {
