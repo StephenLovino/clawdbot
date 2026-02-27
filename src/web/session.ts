@@ -161,6 +161,9 @@ export async function createWaSocket(
 }
 
 export async function waitForWaConnection(sock: ReturnType<typeof makeWASocket>) {
+  if (sock.authState.creds.me) {
+    return Promise.resolve();
+  }
   return new Promise<void>((resolve, reject) => {
     type OffCapable = {
       off?: (event: string, listener: (...args: unknown[]) => void) => void;
