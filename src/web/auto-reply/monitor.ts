@@ -1,3 +1,4 @@
+import { DisconnectReason } from "@whiskeysockets/baileys";
 import { hasControlCommand } from "../../auto-reply/command-detection.js";
 import { resolveInboundDebounceMs } from "../../auto-reply/inbound-debounce.js";
 import { getReplyFromConfig } from "../../auto-reply/reply.js";
@@ -207,24 +208,70 @@ export async function monitorWebChannel(
       return !hasControlCommand(msg.body, cfg);
     };
 
-    const listener = await (listenerFactory ?? monitorWebInbox)({
-      verbose,
-      accountId: account.accountId,
-      authDir: account.authDir,
-      mediaMaxMb: account.mediaMaxMb,
-      sendReadReceipts: account.sendReadReceipts,
-      debounceMs: inboundDebounceMs,
-      shouldDebounce,
-      onMessage: async (msg: WebInboundMsg) => {
-        handledMessages += 1;
-        lastMessageAt = Date.now();
-        status.lastMessageAt = lastMessageAt;
-        status.lastEventAt = lastMessageAt;
-        emitStatus();
-        _lastInboundMsg = msg;
-        await onMessage(msg);
-      },
-    });
+    let listener: Awaited<ReturnType<typeof monitorWebInbox>> | null = null;
+    try {
+      listener = await (listenerFactory ?? monitorWebInbox)({
+        verbose,
+        accountId: account.accountId,
+        authDir: account.authDir,
+        mediaMaxMb: account.mediaMaxMb,
+        sendReadReceipts: account.sendReadReceipts,
+        debounceMs: inboundDebounceMs,
+        shouldDebounce,
+        onMessage: async (msg: WebInboundMsg) => {
+          handledMessages += 1;
+          lastMessageAt = Date.now();
+          status.lastMessageAt = lastMessageAt;
+          status.lastEventAt = lastMessageAt;
+          emitStatus();
+          _lastInboundMsg = msg;
+          await onMessage(msg);
+        },
+      });
+    } catch (err: unknown) {
+      const statusCode = getStatusCode(err);
+      const isLoggedOut = statusCode === DisconnectReason.loggedOut;
+      const errorStr = formatError(err);
+
+      status.connected = false;
+      status.lastEventAt = Date.now();
+      status.lastDisconnect = {
+        at: status.lastEventAt,
+        status: typeof statusCode === "number" ? statusCode : undefined,
+        error: errorStr,
+        loggedOut: isLoggedOut,
+      };
+      status.lastError = errorStr;
+      status.reconnectAttempts = reconnectAttempts;
+      emitStatus();
+
+      reconnectLogger.error(
+        { connectionId, status: statusCode, error: errorStr },
+        "web reconnect: initialization failed",
+      );
+
+      if (isLoggedOut) {
+        runtime.error(
+          `WhatsApp session logged out. Run \`${formatCliCommand("openclaw channels login --channel web")}\` to relink.`,
+        );
+        break;
+      }
+
+      if (isNonRetryableWebCloseStatus(statusCode)) {
+        runtime.error(
+          `WhatsApp Web connection closed (status ${statusCode}: session conflict). Resolve conflicting WhatsApp Web sessions, then relink. Stopping web monitoring.`,
+        );
+        break;
+      }
+
+      reconnectAttempts += 1;
+      if (reconnectPolicy.maxAttempts > 0 && reconnectAttempts >= reconnectPolicy.maxAttempts) {
+        reconnectLogger.warn("web reconnect: max attempts reached");
+      }
+      const delayMs = computeBackoff(reconnectPolicy, reconnectAttempts);
+      await sleep(delayMs, abortSignal);
+      continue;
+    }
 
     status.connected = true;
     status.lastConnectedAt = Date.now();
