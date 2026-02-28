@@ -519,7 +519,20 @@ export const ToolsLinksSchema = z
   .strict()
   .optional();
 
-export const NativeCommandsSettingSchema = z.union([z.boolean(), z.literal("auto")]);
+export const NativeCommandsSettingSchema = z
+  .preprocess(
+    (v) => {
+      if (v === true) {
+        return "true";
+      }
+      if (v === false) {
+        return "false";
+      }
+      return v;
+    },
+    z.enum(["true", "false", "auto"]),
+  )
+  .transform((v) => (v === "true" ? true : v === "false" ? false : "auto"));
 
 export const ProviderCommandsSchema = z
   .object({
