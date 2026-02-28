@@ -43,14 +43,20 @@ const DiscordIdListSchema = z.array(DiscordIdSchema);
 
 const TelegramInlineButtonsScopeSchema = z.enum(["off", "dm", "group", "all", "allowlist"]);
 
-const TelegramCapabilitiesSchema = z.union([
-  z.array(z.string()),
+const TelegramCapabilitiesSchema = z.preprocess(
+  (val: unknown) => {
+    if (Array.isArray(val)) {
+      const enabled = val.some((entry) => String(entry).trim().toLowerCase() === "inlinebuttons");
+      return { inlineButtons: enabled ? "all" : "off" };
+    }
+    return val;
+  },
   z
     .object({
       inlineButtons: TelegramInlineButtonsScopeSchema.optional(),
     })
     .strict(),
-]);
+);
 
 export const TelegramTopicSchema = z
   .object({
