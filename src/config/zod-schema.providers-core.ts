@@ -64,7 +64,7 @@ export const TelegramTopicSchema = z
     groupPolicy: GroupPolicySchema.optional(),
     skills: z.array(z.string()).optional(),
     enabled: z.boolean().optional(),
-    allowFrom: z.array(z.union([z.string(), z.number()])).optional(),
+    allowFrom: z.array(z.preprocess((v) => String(v), z.string())).optional(),
     systemPrompt: z.string().optional(),
   })
   .strict();
@@ -77,7 +77,7 @@ export const TelegramGroupSchema = z
     toolsBySender: ToolPolicyBySenderSchema,
     skills: z.array(z.string()).optional(),
     enabled: z.boolean().optional(),
-    allowFrom: z.array(z.union([z.string(), z.number()])).optional(),
+    allowFrom: z.array(z.preprocess((v) => String(v), z.string())).optional(),
     systemPrompt: z.string().optional(),
     topics: z.record(z.string(), TelegramTopicSchema.optional()).optional(),
   })
@@ -145,16 +145,26 @@ export const TelegramAccountSchemaBase = z
     tokenFile: z.string().optional(),
     replyToMode: ReplyToModeSchema.optional(),
     groups: z.record(z.string(), TelegramGroupSchema.optional()).optional(),
-    allowFrom: z.array(z.union([z.string(), z.number()])).optional(),
-    defaultTo: z.union([z.string(), z.number()]).optional(),
-    groupAllowFrom: z.array(z.union([z.string(), z.number()])).optional(),
+    allowFrom: z.array(z.preprocess((v) => String(v), z.string())).optional(),
+    defaultTo: z.preprocess((v) => String(v), z.string()).optional(),
+    groupAllowFrom: z.array(z.preprocess((v) => String(v), z.string())).optional(),
     groupPolicy: GroupPolicySchema.optional().default("allowlist"),
     historyLimit: z.number().int().min(0).optional(),
     dmHistoryLimit: z.number().int().min(0).optional(),
     dms: z.record(z.string(), DmConfigSchema.optional()).optional(),
     textChunkLimit: z.number().int().positive().optional(),
     chunkMode: z.enum(["length", "newline"]).optional(),
-    streaming: z.union([z.boolean(), z.enum(["off", "partial", "block", "progress"])]).optional(),
+    streaming: z
+      .preprocess(
+        (v) => {
+          if (typeof v === "boolean") {
+            return v ? "progress" : "off";
+          }
+          return v;
+        },
+        z.enum(["off", "partial", "block", "progress"]),
+      )
+      .optional(),
     blockStreaming: z.boolean().optional(),
     draftChunk: BlockStreamingChunkSchema.optional(),
     blockStreamingCoalesce: BlockStreamingCoalesceSchema.optional(),
